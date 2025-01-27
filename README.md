@@ -1,3 +1,2 @@
 # SprintData
-Gabriel Verspyck 
-Raphael Martin
+Gabriel Verspyck & Raphael Martin
