@@ -1,5 +1,5 @@
+
 set sql_safe_updates = 0;
--- 1. Création :
 -- Création de la base de données
 drop DATABASE tp_sql_avancee;
 CREATE DATABASE tp_sql_avancee;
@@ -120,12 +120,12 @@ quantity) VALUES
 (19, 19, 'Sam', '2023-07-20', 3),
 (20, 20, 'Tina', '2023-08-01', 1);
 
--- 1
+-- 1 Afficher les livres dont le prix est supérieur à la moyenne des prix des livres.
 SELECT title, price
 FROM Books
 WHERE price > (SELECT AVG(price) FROM Books);
 
--- 2
+-- 2 Afficher les livres ayant un stock inférieur à la moyenne du stock des livres de leur éditeur.
 SELECT B.title, B.stock, P.publisher_name
 FROM Books B
 JOIN Publishers P ON B.publisher_id = P.publisher_id
@@ -135,7 +135,7 @@ WHERE B.stock < (
     WHERE publisher_id = B.publisher_id
 );
 
--- 3
+-- 3 Créer une vue book_details pour afficher les livres avec leur auteur, éditeur et prix.
 CREATE VIEW book_details AS
 SELECT 
     B.title AS book_title,
@@ -146,7 +146,7 @@ FROM Books B
 JOIN Authors A ON B.author_id = A.author_id
 JOIN Publishers P ON B.publisher_id = P.publisher_id;
 
--- 4
+-- 4 Créer une vue order_summary pour afficher les commandes avec le titre du livre, le client, la date de commande et le total (prix * quantité).
 CREATE VIEW order_summary AS
 SELECT 
     O.order_id,
@@ -157,18 +157,18 @@ SELECT
 FROM Orders O
 JOIN Books B ON O.book_id = B.book_id;
 
--- 5
+-- 5 Créer un index sur la colonne price de la table Books.
 CREATE INDEX idx_books_price ON Books(price);
 
--- 6
+-- 6 Créer un index composite sur les colonnes author_id et publisher_id.
 CREATE INDEX idx_books_author_publisher ON Books(author_id, publisher_id);
 
--- 7
+-- 7 Afficher les livres publiés il y a plus de 20 ans.
 SELECT title, publication_date
 FROM Books
 WHERE YEAR(CURDATE()) - YEAR(publication_date) > 20;
 
--- 8
+-- 8 Afficher le nombre de commandes passées par mois.
 SELECT 
     DATE_FORMAT(order_date, '%Y-%m') AS month,
     COUNT(*) AS total_orders
@@ -176,19 +176,19 @@ FROM Orders
 GROUP BY DATE_FORMAT(order_date, '%Y-%m')
 ORDER BY month;
 
--- 9
+-- 9 Réduire le stock des livres commandés de 5 % pour simuler une erreur, puis annuler cette modification.
 UPDATE Books
 SET stock = stock * 0.95;
 ROLLBACK; 
 
--- 10
+-- 10 Mettre à jour les prix des livres, avec une augmentation de 10 % pour ceux publiés avant l’an 2000, et valider la transaction.
 BEGIN;
 UPDATE Books
 SET price = price * 1.10
 WHERE publication_date < '2000-01-01';
 COMMIT;
 
--- 11
+-- 11 Créer un trigger audit_price_change pour enregistrer les modifications des prix dans une table d’audit.
 CREATE TABLE PriceAudit (
     audit_id INT AUTO_INCREMENT PRIMARY KEY,
     book_id INT,
@@ -210,7 +210,7 @@ END;
 //
 
 
--- 12
+-- 12 Créer un trigger prevent_low_stock_order pour empêcher une commande si le stock disponible est inférieur à la quantité commandée.
 CREATE TRIGGER prevent_low_stock_order
 BEFORE INSERT ON Orders
 FOR EACH ROW
@@ -228,7 +228,7 @@ END;
 DELIMITER ;
 
 
--- 13
+-- 13 Afficher les livres avec une colonne indiquant s'ils sont chers (Expensive) ou abordables (Affordable) selon un seuil de 20 €.
 SELECT title, price,
        CASE 
            WHEN price > 20 THEN 'Expensive'
@@ -236,7 +236,7 @@ SELECT title, price,
        END AS price_category
 FROM Books;
 
--- 14
+-- 14 Afficher les éditeurs avec une colonne indiquant s'ils sont internationaux (Yes) ou non (No) selon leur pays.
 SELECT publisher_name, country,
        CASE 
            WHEN country <> 'France' THEN 'Yes'
@@ -244,7 +244,7 @@ SELECT publisher_name, country,
        END AS is_international
 FROM Publishers;
 
--- 15
+-- 15 Afficher le titre des livres et leur rang global basé sur le prix (RANK())
 SET @rank = 0;
 
 SELECT title, price, @rank := @rank + 1 AS price_rank
@@ -252,7 +252,7 @@ FROM Books
 ORDER BY price DESC;
 
 
--- 16
+-- 16 Afficher le titre des livres et leur numéro de ligne dans l'ordre des prix décroissants (ROW_NUMBER()).
 SET @row_number = 0;
 
 SELECT title, price, @row_number := @row_number + 1 AS row_number
@@ -260,7 +260,7 @@ FROM Books
 ORDER BY price DESC;
 
 
--- 17
+-- 17 Afficher le titre des livres, leur éditeur, et le prix moyen des livres par éditeur (AVG() avec OVER()).
 SELECT B.title, P.publisher_name, B.price,
        (SELECT AVG(price) 
         FROM Books 
@@ -269,7 +269,7 @@ FROM Books B
 JOIN Publishers P ON B.publisher_id = P.publisher_id;
 
 
--- 18
+-- 18 Afficher le titre des livres et la somme cumulative de leurs prix (SUM() avec OVER()).
 SELECT B1.title, B1.price,
        (SELECT SUM(B2.price) 
         FROM Books B2 
@@ -278,7 +278,7 @@ FROM Books B1
 ORDER BY B1.publication_date;
 
 
--- 19
+-- 19 Afficher le titre des livres et leur rang par auteur basé sur le prix (RANK() avec PARTITION BY).
 SET @author_id = NULL;
 SET @rank = 0;
 
@@ -292,7 +292,7 @@ JOIN Authors A ON B.author_id = A.author_id
 ORDER BY B.author_id, B.price DESC;
 
 
--- 20
+-- 20 Afficher le titre des livres et le prix maximum pour chaque éditeur (MAX() avec PARTITION BY).
 SELECT B.title, P.publisher_name, B.price,
        (SELECT MAX(price) 
         FROM Books 
